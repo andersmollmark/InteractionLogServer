@@ -1,0 +1,56 @@
+#!/sbin/runscript
+
+
+depend()
+{
+	use logger net
+}
+
+
+start()
+{
+  ebegin "Starting InteractionLogServer"
+
+  logger -t InteractionLogServer Start the InteractionLogServer
+  export PATH=${PATH}:/home/vms/bin:/home/vms/bin/scripts
+  LOGDIR=/var/log/
+
+  # Temporary fix, make sure mysql can write to /tmp folder
+  chmod a+w /tmp
+  
+# Start the InteractionLogServer
+
+  start-stop-daemon --start --background --make-pidfile --pidfile /var/run/interactionLogServer.pid \
+	  --chdir /opt/interactionLogServer/data/ \
+	  --exec /usr/bin/java \
+      --user root \
+	  --stdout $LOGDIR/interactionLogServer.log \
+	  --stderr $LOGDIR/interactionLogServer_err.log \
+      -- -jar ../dist/interactionLogServer.jar
+      # --  -Djava.ext.dirs=lib -Dlogback.configurationFile=loggingConfig.groovy -jar interactionLogServer.jar
+		# -- -Djava.ext.dirs=lib -Djava.security.properties=/opt/interactionLogServer/etc/sysconfig/jvm.java.security -jar interactionLogServer.jar
+		# -- -Djava.ext.dirs=lib -DDEBUG=true -Dorg.eclipse.jetty.LEVEL=DEBUG -Djavax.net.debug=ssl,handshake,data -jar interactionLogServer.jar
+#      -- -Xdebug -Xrunjdwp:transport=dt_socket,address=8800,server=y,suspend=n -jar interactionLogServer.jar
+
+
+    chmod a+r $LOGDIR/interactionLogServer.log
+    chmod a+r  $LOGDIR/interactionLogServer_err.log
+
+    logger -t InteractionLogServer Start of InteractionLogServer, done !
+    eend 0
+}
+
+
+
+stop()
+{
+  ebegin "Stopping InteractionLogServer"
+  logger -t InteractionLogServer Stop the InteractionLogServer
+
+  start-stop-daemon --stop --exec /usr/bin/java \
+	  --pidfile /var/run/interactionLogServer.pid
+  logger -t InteractionLogServer Stop of the InteractionLogServer
+  eend 0
+}
+
+
